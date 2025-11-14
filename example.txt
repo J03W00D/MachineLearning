@@ -1,5 +1,2 @@
-This is an example file that I'm pushing to main
-
-Im making another change in my branch! This time, im going to push it onto main.
-If I dont save the file, it doesnt show as a change
+This is an example file that I'm merging into main from my branch 'WOOD'
 
