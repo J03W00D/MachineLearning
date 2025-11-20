@@ -131,7 +131,7 @@ class BO:
         return X_initial, Y_initial
 
 
-#Gets all of the extrmemities of the valid searchspace - every 'corner' in 6D
+#Gets all of the extrmemities of the valid searchspace - every 'corner' in 6D anda set of random samples
     def create_searchspace(self, n_points, is_initial):
         X_searchspace = create_sobol_initial_samples(n_points, is_initial)
         for i in [30, 40]:
@@ -143,6 +143,13 @@ class BO:
                                 X_searchspace.append([i, j, k, l, m] + n)
 
         return X_searchspace
+
+#A LITTLE CONFUSING
+#Since x_searchspace is only the extremities of the bounds (as defined above), the chances that a sample
+#or value in x_data is actually at one of the extremities is pretty much 0. This would result in indices being an empty set
+#Also, why only if index.size>0? Python starts counting indices at 0, so if the row in question were the first row, it wouldnt be counted
+#even though I'm assuming it probably should be.
+#PLEASE CORRECT ME IF IM WRONG
 
 
     def find_indices_of_rows(self, x_data, x_searchspace):
@@ -169,6 +176,10 @@ class BO:
         ei[std < epsilon] = 0.0
         return ei
 
+#Not sure that calculating the mean of the x values that have been used is necessary. I think the mean is only needed
+#for the output, and in the equations that are used its just using the arbitrary mean function that we define.
+#When you iterate again and recondition, the change in the output mean will be considered using the covariances
+#May be that there are alternate ways of writing out and getting the same thing.
     def batch_bayesian(self, no_iterations, batch_size):
 
         X_data = self.X_initial.copy()
