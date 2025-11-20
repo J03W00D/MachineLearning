@@ -137,7 +137,7 @@ class BO:
                 indices.add(index[0])
         return indices
 
-    def expected_improvement(self, mean, std, y_best, epsilon=1e-8, xi=5):
+    def expected_improvement(self, mean, std, y_best, epsilon=1e-8, xi=2):
         std_safe = std + epsilon
     
         # *** CORRECTED TERM FOR MAXIMIZATION ***
