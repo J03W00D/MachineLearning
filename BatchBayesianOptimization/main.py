@@ -19,6 +19,9 @@ category_map_1 = {
     'celltype_3': [0, 0, 1]
     }
 
+xsample = create_sobol_initial_samples(3,True)
+print(xsample)
+
 def objective_func(x):
     return np.array(virtual_lab.conduct_experiment(x))
 
@@ -100,6 +103,16 @@ class BO:
 
         self.batch_bayesian(iterations, batch_size)
 
+#IF is_initial = True:
+#Creates first samples randomly (using create_sobol_initial_samples) and calculates the output at these points.
+#Then, updates the best output if any of the new ouotputs is better than the previous best
+#Reformats Y_initial to be a single column vector.
+
+#IF is_initial = False:
+#Creates a new set of [n_points] random samples, appends them onto any existing X values.
+#Calculates all of the corresponding outputs, reformats into a single column vector
+#Points generated are only random
+
     def create_initial_samples(self, n_points, is_initial):
 
         X_initial = create_sobol_initial_samples(n_points, is_initial)
@@ -117,6 +130,8 @@ class BO:
 
         return X_initial, Y_initial
 
+
+#Gets all of the extrmemities of the valid searchspace - every 'corner' in 6D
     def create_searchspace(self, n_points, is_initial):
         X_searchspace = create_sobol_initial_samples(n_points, is_initial)
         for i in [30, 40]:
@@ -128,6 +143,7 @@ class BO:
                                 X_searchspace.append([i, j, k, l, m] + n)
 
         return X_searchspace
+
 
     def find_indices_of_rows(self, x_data, x_searchspace):
         indices = set()
