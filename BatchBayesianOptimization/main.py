@@ -19,8 +19,6 @@ category_map_1 = {
     'celltype_3': [0, 0, 1]
     }
 
-xsample = create_sobol_initial_samples(3,True)
-print(xsample)
 
 def objective_func(x):
     return np.array(virtual_lab.conduct_experiment(x))
