@@ -208,6 +208,7 @@ class BO:
                     ei_values[index] = -1e9
 
             x_batch_to_evaluate = []
+            Y_fake_evals = []
 
             max_ei_history.append(np.max(ei_values))
 
@@ -215,7 +216,13 @@ class BO:
         
             print(f"  Selecting {batch_size} points for batch...")
             for j in range(batch_size):
-                next_index = np.argmax(ei_values)
+                #estimating value = mean at that point
+                if j==0:
+                    next_index = np.argmax(ei_values)
+                    Y_fake = all_means[next_index]
+                else:
+                    next_index = np.argmax(ei_values_temp)
+                    Y_fake = all_means_temp[next_index]
 
                 x_next_numeric_1D = self.X_searchspace[next_index]
 
@@ -223,9 +230,24 @@ class BO:
 
                 print(f"    Point {j + 1}: index {next_index}, EI {ei_values[next_index]:.4f}")
 
-                #this adds the sampled value into sampled_indices and sets its ei to 0 to make sure its 
-                #not repeated. But I think we ought to also update the ei matrix based on the mean at that sample point
-                #so we arent just making a bunch of samples right next to each other.
+                #adds the batch estimated outputs so far into a vector
+                Y_fake_evals.append(Y_fake)
+
+                #temporarily adding the batch points into a matrix with the rest of the data points, using estimated Y
+                x_batch_sofar = np.vstack(x_batch_to_evaluate)
+                total_X_batch = np.vstack([X_data, x_batch_sofar])
+
+                Y_fake_evals_array = np.array(Y_fake_evals).reshape(-1, Y_data.shape[1]) # Convert and reshape to (j+1, ny_dim)
+                # ...
+                total_Y_batch = np.vstack([Y_data, Y_fake_evals_array])
+
+                #make a new GP model that includes our estimated values to influence next point in batch
+                gp_temp_model = GP(total_X_batch,total_Y_batch,'RBF', 5, True)
+
+                all_means_temp, all_vars_temp = gp_temp_model.GP_inference_np(self.X_searchspace)
+                all_stds_temp = np.sqrt(all_vars_temp)
+
+                ei_values_temp = self.expected_improvement(all_means_temp, all_stds_temp, y_best)
 
                 #Here we need a call to GP that adds our sample and an estimated output using some heuristic (trust/lie)
                 #We then need to make a temporary 'all_means' and 'all_stds' to make a temporary ei
@@ -296,3 +318,4 @@ class BO:
         plt.show()
 
 bayesian = BO(15, 5, 6, 2**11)
+

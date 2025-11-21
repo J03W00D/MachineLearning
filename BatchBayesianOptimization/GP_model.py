@@ -15,6 +15,9 @@ class GP:
         self.multi_hyper = multi_hyper
         self.var_out = var_out
 
+#For standardising inputs, could try just doing [0,1] = [lowerbound, upperbound] which would keep it the same as 
+#how scipy.stats.qmc.Sobol(d=num_continuous_dims, scramble=True) works. Or could do [-1,1] if we want to have simiar form
+#also means our axis arent shifting around when recalculating the mean and variance of each dimension
         self.X_mean, self.X_std = np.mean(X, axis=0), np.std(X, axis=0) + 1e-8
         self.Y_mean, self.Y_std = np.mean(Y, axis=0), np.std(Y, axis=0) + 1e-8
         self.X_norm, self.Y_norm = (X - self.X_mean) / self.X_std, (Y - self.Y_mean) / self.Y_std
@@ -55,10 +58,12 @@ class GP:
 
         return NLL
 
+
+    #I wont question whats going on in this icl idk how to tune the hyperparameters
     def determine_hyperparameters(self):
         multi_start = 5
         num_hyperparameters = self.nx_dim + 2
-
+        
         # lb = np.array([1e-1, 1e-1, 1e-1, 1e-1, 1e-1, 1e-1, 1e-1, 1e-1, 1e-3, 1e-6])
         lb = np.array([-3, -3, -3, -3, -3, -3, -3, -3, -3, -6])
 
@@ -98,6 +103,8 @@ class GP:
 
         return hypopt, invKopt
 
+
+#not too sure about the way we're normalising the data (again)
     def GP_inference_np(self, x):
         xnorm = (x - self.X_mean) / self.X_std
 
@@ -131,7 +138,7 @@ class GP:
             mean[:, i] = mean_norm
             var[:, i] = np.maximum(0, var_norm)
 
-        mean_sample = mean * self.Y_std + self.Y_mean
+        mean_sample = mean * self.Y_std + self.Y_mean 
         var_sample = var * self.Y_std ** 2
 
         if self.var_out:
