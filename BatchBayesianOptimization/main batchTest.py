@@ -157,7 +157,7 @@ class BO:
                 indices.add(index[0])
         return indices
 
-    def expected_improvement(self, mean, std, y_best, epsilon=1e-8, xi=0.5):
+    def expected_improvement(self, mean, std, y_best, epsilon=1e-8, xi=0.6):
         std_safe = std + epsilon
     
         # *** CORRECTED TERM FOR MAXIMIZATION ***
@@ -300,11 +300,11 @@ class BO:
         self.BestY = best_y
 
 bestYarray = []
-for m in range(1):
+for m in range(30):
     bayesian = BO(15, 5, 6, 2**11)
     plt.close('all')
     bestYarray.append(bayesian.BestY)
 print(bestYarray)
-
-
+print(np.average(bestYarray))
+print(np.std(bestYarray))
 
