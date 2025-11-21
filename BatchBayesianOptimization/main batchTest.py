@@ -295,27 +295,7 @@ class BO:
         print(f"Best titre found: {best_y.item():.4f} g/L")
         print(f"Best parameters: {best_x_readable}")
 
-        num_iterations = len(self.best_y_history)
-        iterations = list(range(1, num_iterations + 1))
 
-        plt.figure(figsize=(10, 6))
-        plt.plot(iterations, self.best_y_history, marker='o', linestyle='-')
-        plt.title('Best Maximum Solution Found vs. Iterations')
-        plt.xlabel('No. of Iterations')
-        plt.ylabel('Best Current Maximum Solution')
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
-
-        iterations_axis = list(range(1, no_iterations + 1))
-        plt.figure(figsize=(10, 6))
-        plt.plot(iterations_axis, max_ei_history, marker='o', linestyle='-', color='red')
-        plt.title('Maximum Expected Improvement vs. Iterations')
-        plt.xlabel('No. of Iterations')
-        plt.ylabel('Maximum EI')
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
 
         self.BestY = best_y
 
