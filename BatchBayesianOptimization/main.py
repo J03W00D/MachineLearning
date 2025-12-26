@@ -22,42 +22,6 @@ category_map_1 = {
 def objective_func(x):
     return np.array(virtual_lab.conduct_experiment(x))
 
-def create_sobol_initial_samples(num_points, is_initial):
-    bounds = np.array([
-        [30., 40.],  # temp
-        [6., 8.],  # pH
-        [0., 50.],  # f1
-        [0., 50.],  # f2
-        [0., 50.]  # f3
-    ])
-
-    cell_types = ['celltype_1', 'celltype_2', 'celltype_3', 'celltype_1', 'celltype_2', 'celltype_3']
-    random.shuffle(cell_types)
-    cell = [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
-    num_continuous_dims = 5
-
-    sampler = scipy.stats.qmc.Sobol(d=num_continuous_dims, scramble=True)
-    sobol_points_01 = sampler.random(n=num_points)
-
-    lower_bounds = bounds[:, 0]
-    upper_bounds = bounds[:, 1]
-
-    scaled_points = scipy.stats.qmc.scale(sobol_points_01, lower_bounds, upper_bounds)
-
-    x_initial_1 = []
-
-    if not is_initial:
-        for i in range(num_points):
-            continuous_vars = list(scaled_points[i])
-            categorical_var = random.choice(cell)
-            x_initial_1.append(continuous_vars + categorical_var)
-    else:
-        for i in range(num_points):
-            continuous_vars = list(scaled_points[i])
-            categorical_var = cell_types[i]
-            x_initial_1.append(continuous_vars + [categorical_var])
-    return x_initial_1
-
 def one_hot_to_category_name(x_next, category_map=category_map_1):
     one_hot_length = len(next(iter(category_map.values())))
     reverse_map = {tuple(value): key for key, value in category_map.items()}
@@ -94,15 +58,22 @@ class BO:
         self.best_y_history = []
         self.current_best_y = -np.inf
 
-        self.X_initial, self.Y_initial = self.create_initial_samples(initial_points, True)
+        self.X_searchspace, self.X_1, self.X_2, self.X_3 = self.create_searchspace(search_space)
 
-        self.X_searchspace = self.create_searchspace(search_space, False)
+        self.X_initial, self.Y_initial = self.create_initial_samples(initial_points)
 
         self.batch_bayesian(iterations, batch_size)
 
-    def create_initial_samples(self, n_points, is_initial):
+    def create_initial_samples(self, n_points):
 
-        X_initial = create_sobol_initial_samples(n_points, is_initial)
+        selection_1 = random.sample(self.X_1, 2)
+        selection_2 = random.sample(self.X_2, 2)
+        selection_3 = random.sample(self.X_3, 2)
+
+        X_initial_1 = selection_1 + selection_2 + selection_3
+
+        X_initial = one_hot_to_category_name(X_initial_1)
+
         Y_initial = objective_func(X_initial)
 
         for row in Y_initial:
@@ -110,15 +81,46 @@ class BO:
                 self.current_best_y = row
             self.best_y_history.append(self.current_best_y)
 
-        X_initial = category_to_one_hot(X_initial)
         Y_initial = np.array(Y_initial)
         Y_initial = Y_initial.reshape(-1, 1)
         print(X_initial, Y_initial)
+        X_initial = category_to_one_hot(X_initial)
 
         return X_initial, Y_initial
 
-    def create_searchspace(self, n_points, is_initial):
-        X_searchspace = create_sobol_initial_samples(n_points, is_initial)
+    def create_searchspace(self, num_points):
+
+        bounds = np.array([
+            [30., 40.],  # temp
+            [6., 8.],  # pH
+            [0., 50.],  # f1
+            [0., 50.],  # f2
+            [0., 50.]  # f3
+        ])
+
+        cell = [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
+        num_continuous_dims = 5
+
+        sampler = scipy.stats.qmc.Sobol(d=num_continuous_dims, scramble=True)
+        sobol_points_01 = sampler.random(n=num_points)
+
+        lower_bounds = bounds[:, 0]
+        upper_bounds = bounds[:, 1]
+
+        scaled_points = scipy.stats.qmc.scale(sobol_points_01, lower_bounds, upper_bounds)
+
+        x_initial_1 = []
+        x_initial_2 = []
+        x_initial_3 = []
+
+        for i in range(num_points):
+            continuous_vars = list(scaled_points[i])
+            x_initial_1.append(continuous_vars + [1, 0, 0])
+            x_initial_2.append(continuous_vars + [0, 1, 0])
+            x_initial_3.append(continuous_vars + [0, 0, 1])
+
+        X_searchspace = x_initial_1 + x_initial_2 + x_initial_3
+
         for i in [30, 40]:
             for j in [6, 8]:
                 for k in [0, 50]:
@@ -127,7 +129,7 @@ class BO:
                             for n in [[0, 0, 1], [0, 1, 0], [1, 0, 0]]:
                                 X_searchspace.append([i, j, k, l, m] + n)
 
-        return X_searchspace
+        return X_searchspace, x_initial_1, x_initial_2, x_initial_3
 
     def find_indices_of_rows(self, x_data, x_searchspace):
         indices = set()
@@ -246,6 +248,6 @@ class BO:
         plt.ylabel('Maximum EI')
         plt.grid(True)
         plt.tight_layout()
-        plt.show()
+        #plt.show()
 
 bayesian = BO(15, 5, 6, 2**11)
