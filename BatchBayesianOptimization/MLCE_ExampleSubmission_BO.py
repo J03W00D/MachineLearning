@@ -1,7 +1,19 @@
+import MLCE_CWBO2025.virtual_lab as virtual_lab
+import numpy as np
+import scipy
+import random
+import sobol_seq
+import time
+from datetime import datetime
+
+import matplotlib.pyplot as plt
 # Group information
 group_names     = ['Name 1','Name 2']
 cid_numbers     = ['000000','111111']
 oral_assessment = [0, 1]
+
+def objective_func(x):
+    return np.array(virtual_lab.conduct_experiment(x))
 
 # Helper Class
 class RandomSelection:
@@ -34,6 +46,8 @@ class BO:
             self.time        += [datetime.timestamp(datetime.now())-start_time]
             self.time        += [0]*(len(random_selection.random_Y)-1)
             start_time = datetime.timestamp(datetime.now())
+        
+        print(np.max(self.Y))
 
 # BO Execution Block
 

@@ -51,7 +51,7 @@ def category_to_one_hot(x_next, category_map=category_map_1):
 
 class BO:
     def __init__(self, iterations, batch_size, initial_points, search_space):
-        start_time = datetime.timestamp(datetime.now())
+        self.start_time = datetime.timestamp(datetime.now())
         self.Y = []
         self.time = []
 
@@ -61,6 +61,9 @@ class BO:
         self.X_searchspace, self.X_1, self.X_2, self.X_3 = self.create_searchspace(search_space)
 
         self.X_initial, self.Y_initial = self.create_initial_samples(initial_points)
+        self.time  = [datetime.timestamp(datetime.now()) - self.start_time]
+        self.time += [0]*(len(self.X_initial)-1)
+        self.start_time = datetime.timestamp(datetime.now())
 
         self.batch_bayesian(iterations, batch_size)
 
@@ -98,7 +101,6 @@ class BO:
             [0., 50.]  # f3
         ])
 
-        cell = [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
         num_continuous_dims = 5
 
         sampler = scipy.stats.qmc.Sobol(d=num_continuous_dims, scramble=True)
@@ -139,7 +141,7 @@ class BO:
                 indices.add(index[0])
         return indices
 
-    def expected_improvement(self, mean, std, y_best, epsilon=1e-8, xi=2):
+    def expected_improvement(self, mean, std, y_best, epsilon=1e-8, xi=0.2):
         std_safe = std + epsilon
     
         # *** CORRECTED TERM FOR MAXIMIZATION ***
@@ -149,7 +151,7 @@ class BO:
         pdf_Z = scipy.stats.norm.pdf(Z)
         cdf_Z = scipy.stats.norm.cdf(Z)
 
-    # *** CORRECTED EI FORMULA FOR MAXIMIZATION ***
+        # *** CORRECTED EI FORMULA FOR MAXIMIZATION ***
         ei = diff * cdf_Z + std_safe * pdf_Z
 
         ei[std < epsilon] = 0.0
@@ -213,6 +215,10 @@ class BO:
                 print(f"Sampling: {x_readable} --> {y_next_2D.item():.4f}")
                 y_batch_real_results.append(y_next_2D)
 
+            self.time        += [datetime.timestamp(datetime.now()) - self.start_time]
+            self.time        += [0]*(len(y_batch_real_results)-1)
+            self.start_time = datetime.timestamp(datetime.now())
+
             y_batch_array = np.vstack(y_batch_real_results)
 
             X_data = np.vstack([X_data, x_batch_array])
@@ -250,4 +256,26 @@ class BO:
         plt.tight_layout()
         #plt.show()
 
-bayesian = BO(15, 5, 6, 2**11)
+        # Filter out the '0' values you added for the batch members to get time per iteration
+        iteration_times = [t for t in self.time if t > 0]
+        plt.figure(figsize=(10, 6))
+        plt.plot(range(len(iteration_times)), iteration_times, marker='x', color='purple')
+        plt.title('Time Taken per Optimization Step')
+        plt.xlabel('Step (0=Initial, 1+=Batch Iterations)')
+        plt.ylabel('Time (seconds)')
+        plt.grid(True)
+        plt.show()
+
+
+bayesian = BO(15, 5, 6, 2**14)
+
+#best_y_values = []
+# for i in range(10):
+#     bayesian = BO(15, 5, 6, 2**14)
+#     best_y_iter = bayesian.best_y_history[-1]
+#     best_y_values.append(best_y_iter)
+# 
+# average = np.average(best_y_values)
+# 
+# print(best_y_values)
+# print(average)

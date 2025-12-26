@@ -56,7 +56,7 @@ class GP:
         return NLL
 
     def determine_hyperparameters(self):
-        multi_start = 5
+        multi_start = 2**3
         num_hyperparameters = self.nx_dim + 2
 
         # lb = np.array([1e-1, 1e-1, 1e-1, 1e-1, 1e-1, 1e-1, 1e-1, 1e-1, 1e-3, 1e-6])
@@ -67,7 +67,6 @@ class GP:
         sampler = scipy.stats.qmc.Sobol(d=num_hyperparameters, scramble=False, seed=42)
         multi_startvec = sampler.random(n=multi_start)
 
-        # multi_startvec = sobol_seq.i4_sobol_generate(num_hyperparameters, multi_start)
         localsol = np.empty((multi_start, num_hyperparameters))
         localval = np.empty(multi_start)
         hypopt = np.zeros((10, 1))
