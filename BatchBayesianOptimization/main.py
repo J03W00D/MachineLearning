@@ -141,7 +141,7 @@ class BO:
                 indices.add(index[0])
         return indices
 
-    def expected_improvement(self, mean, std, y_best, epsilon=1e-8, xi=0.2):
+    def expected_improvement(self, mean, std, y_best, xi, epsilon=1e-8):
         std_safe = std + epsilon
     
         # *** CORRECTED TERM FOR MAXIMIZATION ***
@@ -174,7 +174,10 @@ class BO:
             all_means, all_vars = gp_model_0.GP_inference_np(self.X_searchspace)
             all_stds = np.sqrt(all_vars)
 
-            ei_values = self.expected_improvement(all_means, all_stds, y_best)
+            if i in [0, 1]:
+                ei_values = self.expected_improvement(all_means, all_stds, y_best, 0.5)
+            else:
+                ei_values = self.expected_improvement(all_means, all_stds, y_best, 0.05)
 
             for index in sampled_indices:
                 if index < len(ei_values):
