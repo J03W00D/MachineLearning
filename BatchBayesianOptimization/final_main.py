@@ -288,7 +288,7 @@ class BO:
         self.X_initial, self.Y_initial = initial_inputs, initial_outputs
 
         for row in self.Y_initial:
-            val = float(row)
+            val = float(np.max(row))
             if val > self.current_best_y:
                 self.current_best_y = val
             self.best_y_history.append(self.current_best_y)
